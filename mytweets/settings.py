@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -54,8 +55,8 @@ ROOT_URLCONF = 'mytweets.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [BASE_DIR / 'templates'],
+        #'APP_DIRS': True, # commented by dev, because of loaders usage.
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -63,9 +64,16 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            # loaders have been added by dev
+            'loaders': [            
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ],
         },
     },
 ]
+
+
 
 WSGI_APPLICATION = 'mytweets.wsgi.application'
 
@@ -79,6 +87,16 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+
+
+#(BY DEV) static file directory inclusion
+STATICFILES_DIRS = (
+os.path.join(
+os.path.dirname(__file__),
+'static',
+),
+)
 
 
 # Password validation
@@ -118,3 +136,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = (
+     os.path.join(BASE_DIR, 'static'),
+)
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static')
