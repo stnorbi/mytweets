@@ -16,11 +16,23 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include, re_path
-from tweets.views import Index, Profile
+from tweets.views import Index, Profile, PostTweet, HashTagCloud, Search, SearchHashTag, HashTagJson
+from django.views.generic.base import RedirectView
+from django.conf.urls.static import static
+from django.conf import settings 
+from django.views.decorators.cache import cache_page
+
+
 admin.autodiscover()
+
 
 urlpatterns = [
     re_path(r'^$', Index.as_view(), name='index'),
-    re_path(r'^user/(\w+)/$', Profile.as_view()),
+    re_path(r'^user/(\w+)/$', Profile.as_view(),name='profile'),
     path('admin/', admin.site.urls),
+    re_path(r'^user/(\w+)/post/$', PostTweet.as_view(), name='posts'),
+    re_path(r'^hashTag/(\w+)/$', HashTagCloud.as_view()),
+    re_path(r'^search/$', Search.as_view()),
+    re_path(r'^search/hashTag$',  cache_page(60 * 15)(SearchHashTag.as_view())),
+    re_path(r'^hashtag.json$', HashTagJson.as_view())
 ]
