@@ -147,3 +147,5 @@ STATIC_ROOT = ''#os.path.join(os.path.dirname(BASE_DIR), 'static')
 STATIC_URL = 'static/'
 
 
+LOGIN_REDIRECT_URL = '/profile'
+LOGIN_URL = 'django.contrib.auth.views.login'

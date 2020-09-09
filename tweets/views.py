@@ -7,51 +7,60 @@ from tweets.forms import TweetForm, SearchForm, SearchHashTagForm
 from django.template.loader import render_to_string
 from django.template import Context
 import json
+from django.contrib.auth.mixins import LoginRequiredMixin
 from datetime import datetime
 
 
 class Index(View):
     def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
         # return HttpResponse('Hello, World!')
-        params = {}
-        params["name"] = "Django"
-        return render(request, 'base.html', params)
+            params = {}
+            params["name"] = "Django"
+            return render(request, 'base.html', params)
+        else:
+            return HttpResponseRedirect('/login/')
 
 
-class Profile(View):
+class Profile(LoginRequiredMixin, View):
     """User Profile page reachable from /user/<username> URL"""
-
     def get(self, request, username):
-        form = TweetForm()
         params = dict()
-        user = User.objects.get(username=username)
-        tweets = Tweet.objects.filter(user=user)
-        params["tweets"] = tweets
-        params["user"] = user
-        params["form"] = form
+        userProfile = User.objects.get(username=username)
+        userFollower = UserFollower.objects.get(user=userProfile)
+        if userFollower.followers.filter(username=request.user.username).exists():
+            params["following"] = True
+        else:
+            params["following"] = False
+            form = TweetForm(initial={'country': 'Global'})
+            search_form = SearchForm()
+            tweets = Tweet.objects.filter(user=userProfile).order_by('-created_date')
+            params["tweets"] = tweets
+            params["profile"] = userProfile
+            params["form"] = form
+            params["search"] = search_form
         return render(request, 'profile.html', params)
-
 
 class PostTweet(RedirectView):
     """Tweet Post form available on page /user/<username> URL"""
 
     def post(self, request, username):
-        form = TweetForm(self.request.POST)
+        form=TweetForm(self.request.POST)
         print(form.is_valid())
         # print(form.cleaned_data['country'])
         if form.is_valid():
-            user = User.objects.get(username=username)
-            tweet = Tweet(text=form.cleaned_data['text'],
-                          user=user,
-                          country=form.cleaned_data['country']
+            user=User.objects.get(username = username)
+            tweet=Tweet(text = form.cleaned_data['text'],
+                          user = user,
+                          country = form.cleaned_data['country']
                           )
             tweet.save()
-            words = form.cleaned_data['text'].split(" ")
-            tweets = Tweet.objects.filter(user=user)
+            words=form.cleaned_data['text'].split(" ")
+            tweets=Tweet.objects.filter(user = user)
 
             for word in words:
                 if word[0] == "#":
-                    hashtag, created = HashTag.objects.get_or_create(
+                    hashtag, created=HashTag.objects.get_or_create(
                         name=word[1:])
                     hashtag.tweet.add(tweet)
             return HttpResponseRedirect('/user/' + username)
@@ -108,9 +117,9 @@ class SearchHashTag(View):
         return render(request, 'search_hashtag.html', params)
 
 
-
 class HashTagJson(View):
     """Search a hashTag with auto complete feature"""
+
     def get(self, request):
         query = request.GET['query']
         hashtaglist = []
@@ -121,3 +130,7 @@ class HashTagJson(View):
             temp["query"] = (hashtag.name)
             hashtaglist.append(temp)
         return HttpResponse(json.dumps(hashtaglist), content_type="application/json")
+
+class UserRedirect(View):
+    def get(self, request):
+        return HttpResponseRedirect('/user/'+request.user.username)
