@@ -12,6 +12,7 @@ from datetime import datetime
 
 
 class Index(View):
+    @login_required
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
         # return HttpResponse('Hello, World!')
@@ -20,7 +21,6 @@ class Index(View):
             return render(request, 'base.html', params)
         else:
             return HttpResponseRedirect('/login/')
-
 
 class Profile(LoginRequiredMixin, View):
     """User Profile page reachable from /user/<username> URL"""

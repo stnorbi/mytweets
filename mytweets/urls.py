@@ -36,7 +36,7 @@ urlpatterns = [
     re_path(r'^search/$', Search.as_view()),
     re_path(r'^search/hashTag$',  cache_page(60 * 15)(SearchHashTag.as_view())),
     re_path(r'^hashtag.json$', HashTagJson.as_view()),
-    re_path(r'^login/$', LoginView.as_view()),
+    re_path(r'^login$', LoginView.as_view()),
     re_path(r'^logout/$', LogoutView.as_view()),
     re_path(r'^profile/$', UserRedirect.as_view())
 ]

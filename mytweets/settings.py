@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import os
+import ldap
+from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
+from django_auth_ldap.config import LDAPGroupQuery
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -58,7 +61,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [BASE_DIR / 'templates'],
-        #'APP_DIRS': True, # commented by dev, because of loaders usage.
+        # 'APP_DIRS': True, # commented by dev, because of loaders usage.
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -67,7 +70,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
             ],
             # loaders have been added by dev
-            'loaders': [            
+            'loaders': [
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
             ],
@@ -76,8 +79,13 @@ TEMPLATES = [
 ]
 
 
-
 WSGI_APPLICATION = 'mytweets.wsgi.application'
+
+# Authentication backend:
+AUTHENTICATION_BACKENDS = [
+        'django_auth_ldap.backend.LDAPBackend',
+        'django.contrib.auth.backends.ModelBackend'
+]
 
 
 # Database
@@ -86,13 +94,12 @@ WSGI_APPLICATION = 'mytweets.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db.teradata',
     }
 }
 
 
-
-#(BY DEV) static file directory inclusion
+# (BY DEV) static file directory inclusion
 # STATICFILES_DIRS = (
 # os.path.join(
 # os.path.dirname(__file__),
@@ -138,14 +145,42 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATICFILES_DIRS = (
-     os.path.join(BASE_DIR, 'static/'),
+    os.path.join(BASE_DIR, 'static/'),
 )
 
 
-STATIC_ROOT = ''#os.path.join(os.path.dirname(BASE_DIR), 'static')
+STATIC_ROOT = ''  # os.path.join(os.path.dirname(BASE_DIR), 'static')
 
 STATIC_URL = 'static/'
 
+AUTH_LDAP_SERVER_URI = 'ldap://www.zflexldap.com'
+AUTH_LDAP_BIND_DN = 'cn=ro_admin,ou=sysadmins,dc=zflexsoftware,dc=com'
+AUTH_LDAP_BIND_PASSWORD = 'zflexpass'
+
+AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=developers,dc=zflexsoftware,dc=com", ldap.SCOPE_SUBTREE, 'uid=%(user)s'
+)
+
+AUTH_LDAP_USER_ATTR_MAP = {
+ 'username':'uid',
+'email': 'mail',
+'is_staff': True,
+#other fields as needed
+}
+
+# To ensure user object is updated each time on login
+AUTH_LDAP_ALWAYS_UPDATE_USER = True
+
+AUTH_USER_MODEL = 'user_profile.User'
+
+
+AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
+'ou=mathematicians,dc=example,dc=com', ldap.SCOPE_SUBTREE
+,"(objectClass=group)"
+)
+
+AUTH_LDAP_REQUIRE_GROUP = (
+LDAPGroupQuery('cn=Mathematicians,ou_groups,dc=example,dc=com'),
+)
 
 LOGIN_REDIRECT_URL = '/profile'
 LOGIN_URL = 'django.contrib.auth.views.login'
